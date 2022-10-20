@@ -76,13 +76,23 @@ app.post("/api/shorturl", function (req, res) {
   const original_url = req.body.url;
   console.log("Received URL to shorten: " + original_url);
   // if url is invalid, return an error message
-  if (!validator.isURL(original_url)){
-    console.log("- invalid; sending error message to client")
-    res.json({ error: 'invalid url' });
+  if (!validator.isURL(original_url)) {
+    console.log("- invalid; sending error message to client");
+    res.json({ error: "invalid url" });
     return;
   }
   // if url already exists, return the data directly
-  
+  console.log("Checking for existing entry in database");
+  Url.findOne({ original_url: original_url }, (err, data) => {
+    if (err) return console.log(err);
+    // data will be null if no results
+    if (data) {
+      console.log("Found existing entry: " + data);
+      console.log("- Sending to client...");
+      res.json({ original_url: data.original_url, short_url: data._id });
+      return;
+    }
+  });
   // otherwise, create a new shortened url and return it
   console.log("Attempting to shorten url...");
   addNewUrl(original_url, (err, data) => {
