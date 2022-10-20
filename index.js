@@ -24,14 +24,15 @@ const Counter = mongoose.model("Counter", counterSchema);
 const urlSchema = new mongoose.Schema({
   _id: Number,
   original_url: String,
-  short_url: String
+  short_url: String,
 });
 const Url = mongoose.model("URL", urlSchema);
 
-function getNextSequenceValue(sequenceName){
+function getNextSequenceValue(sequenceName) {
   return Counter.findOneAndUpdate(
-    {_id:sequenceName},
-    { $inc:{sequence_value: 1} });
+    { _id: sequenceName },
+    { $inc: { sequence_value: 1 } }
+  );
 }
 
 app.use(cors());
