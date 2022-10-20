@@ -28,6 +28,12 @@ const urlSchema = new mongoose.Schema({
 });
 const Url = mongoose.model("URL", urlSchema);
 
+function getNextSequenceValue(sequenceName){
+  return Counter.findOneAndUpdate(
+    {_id:sequenceName},
+    { $inc:{sequence_value: 1} });
+}
+
 app.use(cors());
 
 app.use("/public", express.static(`${process.cwd()}/public`));
