@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
+const validator = require("validator");
 const app = express();
 
 // Basic Configuration
@@ -24,16 +25,42 @@ const Counter = mongoose.model("Counter", counterSchema);
 const urlSchema = new mongoose.Schema({
   _id: Number,
   original_url: String,
-  short_url: String,
 });
 const Url = mongoose.model("URL", urlSchema);
 
-function getNextSequenceValue(sequenceName) {
-  return Counter.findOneAndUpdate(
-    { _id: sequenceName },
-    { $inc: { sequence_value: 1 } }
-  ).sequence_value;
-}
+// increment and return the value of some sequence, such as an ID number
+const getNextSequenceValue = (sequenceName, done) => {
+  console.log("attempting to get next number in sequence: " + sequenceName);
+  Counter.findOneAndUpdate(
+    { __id: sequenceName },
+    { $inc: { sequence_value: 1 } },
+    { new: true },
+    (err, doc) => {
+      if (err) return console.log(err);
+      console.log("successfully got next number in sequence: " + doc);
+      done(null, doc.sequence_value);
+    }
+  );
+};
+
+// create new url document with auto-incremented
+// id representing short url and return it
+const addNewUrl = (url, done) => {
+  console.log("trying to add new url: " + url);
+  getNextSequenceValue("url_id", (err, sequence_value) => {
+    if (err) return console.log(err);
+    const doc = new Url({
+      _id: sequence_value,
+      original_url: url,
+    });
+    console.log("trying to save url...");
+    doc.save((err, data) => {
+      if (err) return console.log(err);
+      console.log("successfully saved new url: " + data);
+      done(null, data);
+    });
+  });
+};
 
 app.use(cors());
 
@@ -46,15 +73,29 @@ app.get("/", function (req, res) {
 
 // receive new url, shorten and return it
 app.post("/api/shorturl", function (req, res) {
-  const longUrl = req.body.url;
-  // need to handle simultaneous posts
-  const shortUrl = new Date().getTime().toString(36);
-  res.json({ original_url: longUrl, short_url: shortUrl });
+  const original_url = req.body.url;
+  console.log("Received URL to shorten: " + original_url);
+  // if url is invalid, return an error message
+  if (!validator.isURL(original_url)){
+    console.log("- invalid; sending error message to client")
+    res.json({ error: 'invalid url' });
+    return;
+  }
+  // if url already exists, return the data directly
+  
+  // otherwise, create a new shortened url and return it
+  console.log("Attempting to shorten url...");
+  addNewUrl(original_url, (err, data) => {
+    if (err) return console.log(err);
+    console.log("Successfully shortened url: " + data);
+    res.json({ original_url: data.original_url, short_url: data._id });
+  });
 });
 
 // redirect to shortened url
 app.get("/api/shorturl/:url", function (req, res) {
-  res.json({ greeting: "hello API" });
+  console.log("Incoming shortened URL: " + req.params.url);
+  res.json({ url: req.params.url });
 });
 
 app.listen(port, function () {
