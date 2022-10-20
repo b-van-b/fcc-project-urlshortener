@@ -114,9 +114,9 @@ app.get("/api/shorturl/:url", function (req, res) {
       console.log("Found existing entry: " + data);
       destination = data.original_url;
       // prepend "https://" if missing
-      if (!validator.isURL(data.original_url, {require_protocol: true})){
-        console.log("- Prepending https:// to url...")
-        destination = "https://"+destination;
+      if (!validator.isURL(data.original_url, { require_protocol: true })) {
+        console.log("- Prepending https:// to url...");
+        destination = "https://" + destination;
       }
       console.log("- Redirecting client...");
       res.redirect(destination);
