@@ -32,7 +32,7 @@ function getNextSequenceValue(sequenceName) {
   return Counter.findOneAndUpdate(
     { _id: sequenceName },
     { $inc: { sequence_value: 1 } }
-  );
+  ).sequence_value;
 }
 
 app.use(cors());
