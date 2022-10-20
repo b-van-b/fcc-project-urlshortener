@@ -104,8 +104,25 @@ app.post("/api/shorturl", function (req, res) {
 
 // redirect to shortened url
 app.get("/api/shorturl/:url", function (req, res) {
+  let destination;
   console.log("Incoming shortened URL: " + req.params.url);
-  res.json({ url: req.params.url });
+  // find the url and redirect to it if it exists
+  Url.findOne({ _id: Number(req.params.url) }, (err, data) => {
+    if (err) return console.log(err);
+    // data will be null if no results
+    if (data) {
+      console.log("Found existing entry: " + data);
+      destination = data.original_url;
+      // prepend "https://" if missing
+      if (!validator.isURL(data.original_url, {require_protocol: true})){
+        console.log("- Prepending https:// to url...")
+        destination = "https://"+destination;
+      }
+      console.log("- Redirecting client...");
+      res.redirect(destination);
+      return;
+    }
+  });
 });
 
 app.listen(port, function () {
