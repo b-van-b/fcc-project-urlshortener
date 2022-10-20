@@ -18,8 +18,15 @@ const counterSchema = new mongoose.Schema({
   _id: String,
   sequence_value: { type: Number, default: 0 },
 });
-
 const Counter = mongoose.model("Counter", counterSchema);
+
+// define url schema and model
+const urlSchema = new mongoose.Schema({
+  _id: Number,
+  original_url: String,
+  short_url: String
+});
+const Url = mongoose.model("URL", urlSchema);
 
 app.use(cors());
 
